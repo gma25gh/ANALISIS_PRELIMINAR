@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANAPRE – Analizador de Prefactibilidad</title>
+<style>
+:root {
+  --bg: #0f1117;
+  --bg2: #161b27;
+  --bg3: #1e2535;
+  --card: #1a2033;
+  --border: #2a3347;
+  --text: #e8eaf0;
+  --text2: #8892a4;
+  --accent: #4f8ef7;
+  --green: #22c55e;
+  --yellow: #eab308;
+  --red: #ef4444;
+  --green-bg: rgba(34,197,94,0.1);
+  --yellow-bg: rgba(234,179,8,0.1);
+  --red-bg: rgba(239,68,68,0.1);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+[data-theme="light"] {
+  --bg: #f0f2f8;
+  --bg2: #e4e8f2;
+  --bg3: #dde2ef;
+  --card: #ffffff;
+  --border: #c8d0e4;
+  --text: #1a2033;
+  --text2: #5a6480;
+  --accent: #3b77e8;
+  --shadow: 0 4px 24px rgba(0,0,0,0.1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
+/* HEADER */
+header{background:var(--card);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+.logo{display:flex;align-items:center;gap:12px;font-size:1.25rem;font-weight:700;letter-spacing:-.5px}
+.logo span{background:linear-gradient(135deg,#4f8ef7,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-dot{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,#4f8ef7,#a78bfa);box-shadow:0 0 12px #4f8ef7}
+.header-actions{display:flex;gap:12px;align-items:center}
+.badge{font-size:.7rem;font-weight:600;padding:3px 8px;border-radius:20px;background:rgba(79,142,247,.15);color:var(--accent);border:1px solid rgba(79,142,247,.3);letter-spacing:.5px}
+/* THEME TOGGLE */
+.toggle-theme{background:var(--bg3);border:1px solid var(--border);color:var(--text);cursor:pointer;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;transition:all .2s}
+.toggle-theme:hover{background:var(--accent);color:#fff}
+/* RESET BUTTON */
+.btn-reset{background:transparent;border:1px solid var(--border);color:var(--text2);cursor:pointer;padding:8px 16px;border-radius:var(--radius-sm);font-size:.85rem;transition:all .2s}
+.btn-reset:hover{border-color:var(--accent);color:var(--accent)}
+/* MAIN */
+main{max-width:1400px;margin:0 auto;padding:32px 24px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:1024px){main{grid-template-columns:1fr}}
+/* SECTION LABELS */
+.section-label{font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);transition:background .3s,border .3s}
+.card-title{font-size:.95rem;font-weight:700;margin-bottom:20px;color:var(--text);display:flex;align-items:center;gap:8px}
+.card-title .icon{width:28px;height:28px;border-radius:var(--radius-sm);display:grid;place-items:center;font-size:.85rem}
+.icon-blue{background:rgba(79,142,247,.15);color:var(--accent)}
+.icon-green{background:rgba(34,197,94,.15);color:var(--green)}
+.icon-purple{background:rgba(167,139,250,.15);color:#a78bfa}
+.icon-yellow{background:rgba(234,179,8,.15);color:var(--yellow)}
+/* FORM ELEMENTS */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.form-row.full{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:6px}
+label{font-size:.8rem;font-weight:600;color:var(--text2)}
+input[type=number],input[type=text]{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:10px 14px;font-size:.9rem;width:100%;transition:border .2s,background .2s;outline:none}
+input[type=number]:focus,input[type=text]:focus{border-color:var(--accent);background:var(--bg2)}
+input[type=number]::-webkit-inner-spin-button{opacity:.5}
+.input-prefix{position:relative}
+.input-prefix span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:.85rem;pointer-events:none}
+.input-prefix input{padding-left:28px}
+/* SLIDER */
+.slider-group{margin-bottom:16px}
+.slider-row{display:flex;align-items:center;gap:12px;margin-top:6px}
+input[type=range]{flex:1;-webkit-appearance:none;height:5px;border-radius:3px;background:var(--bg3);outline:none;cursor:pointer;accent-color:var(--accent)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(79,142,247,.5);cursor:pointer;transition:transform .15s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.slider-val{min-width:80px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;text-align:center;font-size:.85rem;font-weight:700;color:var(--accent)}
+/* LAND COST */
+.cost-block{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px}
+.cost-block-title{font-size:.75rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.units-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.unit-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px}
+.unit-item label{font-size:.72rem;margin-bottom:6px;display:block}
+/* DYNAMIC ITEMS */
+.dynamic-item{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.dynamic-item input[type=text]{flex:1.5}
+.dynamic-item input[type=number]{flex:1}
+.btn-remove{background:var(--red-bg);border:1px solid var(--red);color:var(--red);border-radius:var(--radius-sm);width:32px;height:32px;cursor:pointer;font-size:1rem;display:grid;place-items:center;flex-shrink:0;transition:all .2s}
+.btn-remove:hover{background:var(--red);color:#fff}
+.btn-add{display:flex;align-items:center;gap:8px;background:transparent;border:1px dashed var(--border);color:var(--text2);padding:10px 16px;border-radius:var(--radius-sm);cursor:pointer;font-size:.85rem;width:100%;justify-content:center;transition:all .2s;margin-top:4px}
+.btn-add:hover{border-color:var(--accent);color:var(--accent)}
+/* TOTAL LAND */
+.total-land{background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);border-radius:var(--radius-sm);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.total-land-label{font-size:.8rem;font-weight:600;color:var(--text2)}
+.total-land-value{font-size:1.2rem;font-weight:800;color:var(--accent)}
+/* RESULT CARDS */
+.results-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.result-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;transition:all .3s}
+.result-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s}
+.result-card.green::before{background:var(--green-bg)}
+.result-card.red::before{background:var(--red-bg)}
+.result-card.yellow::before{background:var(--yellow-bg)}
+.result-card.green{border-color:rgba(34,197,94,.3)}
+.result-card.red{border-color:rgba(239,68,68,.3)}
+.result-card.yellow{border-color:rgba(234,179,8,.3)}
+.result-card::before{opacity:1}
+.result-label{font-size:.72rem;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text2);margin-bottom:8px}
+.result-value{font-size:1.5rem;font-weight:800;color:var(--text);line-height:1;transition:color .3s}
+.result-card.green .result-value{color:var(--green)}
+.result-card.red .result-value{color:var(--red)}
+.result-card.yellow .result-value{color:var(--yellow)}
+.result-sub{font-size:.75rem;color:var(--text2);margin-top:4px}
+/* FULL WIDTH CARD */
+.col-span-2{grid-column:1/-1}
+@media(max-width:1024px){.col-span-2{grid-column:auto}}
+/* PROFITABILITY BAR */
+.prof-bar-wrap{margin-top:20px}
+.prof-bar-labels{display:flex;justify-content:space-between;font-size:.7rem;color:var(--text2);margin-bottom:6px}
+.prof-bar-track{height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;position:relative}
+.prof-bar-fill{height:100%;border-radius:5px;transition:width .6s cubic-bezier(.22,1,.36,1),background .4s;min-width:2px}
+.prof-bar-markers{position:relative;height:16px}
+.marker{position:absolute;font-size:.65rem;color:var(--text2);transform:translateX(-50%)}
+.marker::before{content:'';display:block;width:1px;height:6px;background:var(--border);margin:0 auto}
+/* GAUGE */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0}
+.roi-display{text-align:center}
+.roi-big{font-size:3rem;font-weight:900;background:linear-gradient(135deg,#4f8ef7,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;transition:all .3s}
+.roi-label{font-size:.8rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px}
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:.8rem;font-weight:700;letter-spacing:.5px;margin-top:8px;transition:all .3s}
+.status-badge span{width:8px;height:8px;border-radius:50%}
+.status-green{background:var(--green-bg);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.status-green span{background:var(--green);box-shadow:0 0 6px var(--green)}
+.status-red{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.status-red span{background:var(--red);box-shadow:0 0 6px var(--red)}
+.status-yellow{background:var(--yellow-bg);color:var(--yellow);border:1px solid rgba(234,179,8,.3)}
+.status-yellow span{background:var(--yellow);box-shadow:0 0 6px var(--yellow)}
+/* INSIGHTS */
+.insights-list{display:flex;flex-direction:column;gap:10px}
+.insight-item{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:var(--radius-sm);border-left:3px solid;transition:all .3s}
+.insight-item.warn{background:var(--yellow-bg);border-color:var(--yellow)}
+.insight-item.bad{background:var(--red-bg);border-color:var(--red)}
+.insight-item.good{background:var(--green-bg);border-color:var(--green)}
+.insight-item.info{background:rgba(79,142,247,.08);border-color:var(--accent)}
+.insight-icon{font-size:1rem;flex-shrink:0;margin-top:1px}
+.insight-text{font-size:.82rem;line-height:1.5;color:var(--text)}
+/* SUMMARY TABLE */
+.summary-table{width:100%;border-collapse:collapse}
+.summary-table td{padding:10px 4px;border-bottom:1px solid var(--border);font-size:.85rem}
+.summary-table td:last-child{text-align:right;font-weight:700}
+.summary-table tr:last-child td{border-bottom:none;font-size:.95rem;color:var(--accent)}
+/* ANIM */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.updating{animation:pulse .4s ease}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <span>ANAPRE</span>
+    <span class="badge">PRO</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn-reset" onclick="resetDefaults()">↺ Restaurar</button>
+    <button class="toggle-theme" id="themeBtn" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- LEFT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:24px">
+
+    <!-- URBAN DATA -->
+    <div class="card">
+      <div class="section-label">📐 Datos Urbanísticos</div>
+      <div class="card-title"><span class="icon icon-blue">🏗</span> Superficie del Proyecto</div>
+      <div class="form-row">
+        <div class="field">
+          <label>Superficie Construible (m²)</label>
+          <input type="number" id="buildable" value="1200" min="1" oninput="syncSellable();calculate()">
+        </div>
+        <div class="field">
+          <label>Eficiencia Vendible (%)</label>
+          <input type="number" id="efficiency" value="75" min="1" max="100" oninput="syncSellable();calculate()">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="field">
+          <label>Superficie Vendible (m²) <small style="color:var(--accent)">(auto · editable)</small></label>
+          <input type="number" id="sellable" value="900" min="1" oninput="unlockSellable();calculate()">
+        </div>
+      </div>
+    </div>
+
+    <!-- LAND COST -->
+    <div class="card">
+      <div class="section-label">💰 Módulo de Costo de Suelo</div>
+      <div class="card-title"><span class="icon icon-yellow">🏠</span> Costo del Terreno</div>
+
+      <div class="cost-block">
+        <div class="cost-block-title">Costos Fijos</div>
+        <div class="form-row">
+          <div class="field">
+            <label>Compra del Terreno (USD)</label>
+            <div class="input-prefix"><span>$</span><input type="number" id="landPurchase" value="180000" min="0" oninput="calculate()"></div>
+          </div>
+          <div class="field">
+            <label>Demolición (USD)</label>
+            <div class="input-prefix"><span>$</span><input type="number" id="demolition" value="8000" min="0" oninput="calculate()"></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Traslado Transitorio – Meses</label>
+            <input type="number" id="relocMonths" value="6" min="0" oninput="calculate()">
+          </div>
+          <div class="field">
+            <label>Alquiler Mensual (USD)</label>
+            <div class="input-prefix"><span>$</span><input type="number" id="relocRent" value="500" min="0" oninput="calculate()"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cost-block">
+        <div class="cost-block-title">Unidades a Entregar al Propietario</div>
+        <div class="units-grid">
+          <div class="unit-item">
+            <label>Dptos · Cant</label><input type="number" id="uAptQty" value="2" min="0" oninput="calculate()">
+            <label style="margin-top:8px">Valor c/u (USD)</label>
+            <div class="input-prefix"><span>$</span><input type="number" id="uAptVal" value="55000" min="0" oninput="calculate()"></div>
+          </div>
+          <div class="unit-item">
+            <label>Estudios · Cant</label><input type="number" id="uStudioQty" value="1" min="0" oninput="calculate()">
+            <label style="margin-top:8px">Valor c/u (USD)</label>
+            <div class="input-prefix"><span>$</span><input type="number" id="uStudioVal" value="32000" min="0" oninput="calculate()"></div>
+          </div>
+          <div class="unit-item">
+            <label>Cocheras · Cant</label><input type="number" id="uParkQty" value="2" min="0" oninput="calculate()">
+            <label style="margin-top:8px">Valor c/u (USD)</label>
+            <div class="input-prefix"><span>$</span><input type="number" id="uParkVal" value="9000" min="0" oninput="calculate()"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cost-block">
+        <div class="cost-block-title">Costos Adicionales Dinámicos</div>
+        <div id="dynamicItems"></div>
+        <button class="btn-add" onclick="addCostItem()">＋ Agregar ítem</button>
+      </div>
+
+      <div class="total-land">
+        <span class="total-land-label">COSTO TOTAL DEL SUELO</span>
+        <span class="total-land-value" id="totalLandDisplay">$ 0</span>
+      </div>
+    </div>
+
+    <!-- MARKET VARIABLES -->
+    <div class="card">
+      <div class="section-label">📊 Variables de Mercado</div>
+      <div class="card-title"><span class="icon icon-purple">💹</span> Precios de Referencia</div>
+
+      <div class="slider-group">
+        <label>Precio de Venta (USD/m²)</label>
+        <div class="slider-row">
+          <input type="range" id="saleSlider" min="500" max="5000" step="50" value="1800" oninput="syncInput('salePrice','saleSlider');calculate()">
+          <div class="slider-val" id="salePriceDisplay">$1,800</div>
+        </div>
+        <div class="input-prefix" style="margin-top:8px"><span>$</span>
+          <input type="number" id="salePrice" value="1800" min="100" max="10000" oninput="syncSlider('saleSlider','salePrice');calculate()">
+        </div>
+        <div style="font-size:.72rem;color:var(--text2);margin-top:4px">💡 Sugerido Corrientes: $1,500–$2,200/m²</div>
+      </div>
+
+      <div class="slider-group" style="margin-top:16px">
+        <label>Costo de Construcción (USD/m²)</label>
+        <div class="slider-row">
+          <input type="range" id="constSlider" min="200" max="2000" step="25" value="750" oninput="syncInput('constCost','constSlider');calculate()">
+          <div class="slider-val" id="constCostDisplay">$750</div>
+        </div>
+        <div class="input-prefix" style="margin-top:8px"><span>$</span>
+          <input type="number" id="constCost" value="750" min="100" max="5000" oninput="syncSlider('constSlider','constCost');calculate()">
+        </div>
+        <div style="font-size:.72rem;color:var(--text2);margin-top:4px">💡 Referencia: $600–$950/m² (obra tradicional)</div>
+      </div>
+    </div>
+
+  </div><!-- END LEFT -->
+
+  <!-- RIGHT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:24px">
+
+    <!-- MAIN RESULTS -->
+    <div class="card">
+      <div class="section-label">🎯 Resultados en Tiempo Real</div>
+      <div class="results-grid">
+        <div class="result-card" id="rc-sales">
+          <div class="result-label">💵 Valor Total de Ventas</div>
+          <div class="result-value" id="r-sales">–</div>
+          <div class="result-sub" id="r-sales-sub"></div>
+        </div>
+        <div class="result-card" id="rc-invest">
+          <div class="result-label">📦 Inversión Total</div>
+          <div class="result-value" id="r-invest">–</div>
+          <div class="result-sub" id="r-invest-sub"></div>
+        </div>
+        <div class="result-card" id="rc-profit">
+          <div class="result-label">📈 Utilidad Neta</div>
+          <div class="result-value" id="r-profit">–</div>
+          <div class="result-sub" id="r-profit-sub"></div>
+        </div>
+        <div class="result-card" id="rc-incid">
+          <div class="result-label">⚖️ Incidencia Constructiva</div>
+          <div class="result-value" id="r-incid">–</div>
+          <div class="result-sub">Costo / Precio de venta</div>
+        </div>
+      </div>
+
+      <!-- ROI BIG NUMBER -->
+      <div style="text-align:center;padding:16px 0 8px">
+        <div class="roi-display">
+          <div class="roi-big" id="roiBig">0%</div>
+          <div class="roi-label">Retorno sobre Inversión (ROI)</div>
+          <div id="statusBadge" class="status-badge status-red"><span></span>EVALUANDO…</div>
+        </div>
+      </div>
+
+      <!-- PROFITABILITY BAR -->
+      <div class="prof-bar-wrap">
+        <div class="prof-bar-labels"><span>–50%</span><span>0%</span><span>10%</span><span>25%</span><span>50%+</span></div>
+        <div class="prof-bar-track"><div class="prof-bar-fill" id="profBar" style="width:0%"></div></div>
+        <div class="prof-bar-markers">
+          <div class="marker" style="left:33.3%">0%</div>
+          <div class="marker" style="left:40%">10%</div>
+          <div class="marker" style="left:50%">25%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUMMARY TABLE -->
+    <div class="card">
+      <div class="section-label">📋 Resumen Financiero</div>
+      <div class="card-title"><span class="icon icon-blue">📊</span> Desglose de Costos</div>
+      <table class="summary-table">
+        <tbody>
+          <tr><td>Costo del Suelo</td><td id="s-land">–</td></tr>
+          <tr><td>Costo de Construcción</td><td id="s-const">–</td></tr>
+          <tr><td>Área Construible</td><td id="s-build">–</td></tr>
+          <tr><td>Área Vendible</td><td id="s-sell">–</td></tr>
+          <tr><td>Eficiencia Vendible</td><td id="s-eff">–</td></tr>
+          <tr><td>Incidencia del Suelo</td><td id="s-landInc">–</td></tr>
+          <tr><td style="color:var(--accent);font-weight:800">INVERSIÓN TOTAL</td><td id="s-total">–</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SMART INSIGHTS -->
+    <div class="card">
+      <div class="section-label">💡 Inteligencia de Proyecto</div>
+      <div class="card-title"><span class="icon icon-green">🧠</span> Diagnóstico Automático</div>
+      <div class="insights-list" id="insightsList">
+        <div class="insight-item info"><span class="insight-icon">ℹ️</span><span class="insight-text">Completá los datos para ver el análisis inteligente.</span></div>
+      </div>
+    </div>
+
+  </div><!-- END RIGHT -->
+
+</main>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+let sellableUnlocked = false;
+let dynamicItems = [];
+let itemId = 0;
+
+// ─── THEME ───────────────────────────────────────────────
+function toggleTheme(){
+  const h = document.documentElement;
+  const dark = h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme', dark?'light':'dark');
+  document.getElementById('themeBtn').textContent = dark?'🌙':'☀️';
+}
+
+// ─── SYNC SELLABLE ────────────────────────────────────────
+function syncSellable(){
+  if(sellableUnlocked) return;
+  const b = +v('buildable'), e = +v('efficiency');
+  setVal('sellable', Math.round(b * e / 100));
+}
+function unlockSellable(){ sellableUnlocked=true; }
+
+// ─── SLIDER SYNC ─────────────────────────────────────────
+function syncInput(inputId, sliderId){
+  const val = +v(sliderId);
+  setVal(inputId, val);
+  document.getElementById(inputId+'Display') && (document.getElementById(inputId+'Display').textContent = fmt(val));
+  // update slider display labels
+  if(sliderId==='saleSlider') document.getElementById('salePriceDisplay').textContent=fmt(val);
+  if(sliderId==='constSlider') document.getElementById('constCostDisplay').textContent=fmt(val);
+}
+function syncSlider(sliderId, inputId){
+  const val = +v(inputId);
+  document.getElementById(sliderId).value = val;
+  if(inputId==='salePrice') document.getElementById('salePriceDisplay').textContent=fmt(val);
+  if(inputId==='constCost') document.getElementById('constCostDisplay').textContent=fmt(val);
+}
+
+// ─── DYNAMIC ITEMS ───────────────────────────────────────
+function addCostItem(name='', val=''){
+  const id = ++itemId;
+  dynamicItems.push(id);
+  const wrap = document.getElementById('dynamicItems');
+  const div = document.createElement('div');
+  div.className='dynamic-item';
+  div.id='di-'+id;
+  div.innerHTML=`<input type="text" placeholder="Descripción…" value="${name}" oninput="calculate()">
+  <input type="number" placeholder="USD" value="${val}" min="0" oninput="calculate()">
+  <button class="btn-remove" onclick="removeCostItem(${id})">✕</button>`;
+  wrap.appendChild(div);
+  calculate();
+}
+function removeCostItem(id){
+  const el = document.getElementById('di-'+id);
+  if(el) el.remove();
+  dynamicItems = dynamicItems.filter(x=>x!==id);
+  calculate();
+}
+function getDynamicTotal(){
+  let total=0;
+  dynamicItems.forEach(id=>{
+    const el = document.getElementById('di-'+id);
+    if(!el) return;
+    const inputs = el.querySelectorAll('input[type=number]');
+    if(inputs[0]) total += (+inputs[0].value)||0;
+  });
+  return total;
+}
+
+// ─── CALCULATIONS ─────────────────────────────────────────
+function calculate(){
+  const buildable = +v('buildable')||0;
+  const efficiency = +v('efficiency')||75;
+  const sellable = +v('sellable')||0;
+  const salePrice = +v('salePrice')||0;
+  const constCost = +v('constCost')||0;
+
+  // Land cost
+  const landPurchase = +v('landPurchase')||0;
+  const demolition = +v('demolition')||0;
+  const relocTotal = ((+v('relocMonths'))||0) * ((+v('relocRent'))||0);
+  const unitsCost = ((+v('uAptQty'))||0)*((+v('uAptVal'))||0)
+                  + ((+v('uStudioQty'))||0)*((+v('uStudioVal'))||0)
+                  + ((+v('uParkQty'))||0)*((+v('uParkVal'))||0);
+  const dynamicTotal = getDynamicTotal();
+  const totalLand = landPurchase + demolition + relocTotal + unitsCost + dynamicTotal;
+
+  // Main calcs
+  const totalSales = sellable * salePrice;
+  const totalConst = buildable * constCost;
+  const totalInvest = totalLand + totalConst;
+  const profit = totalSales - totalInvest;
+  const roi = totalInvest>0 ? (profit/totalInvest)*100 : 0;
+  const incidence = salePrice>0 ? (constCost/salePrice)*100 : 0;
+  const landIncidence = totalInvest>0 ? (totalLand/totalInvest)*100 : 0;
+
+  // Display
+  document.getElementById('totalLandDisplay').textContent = fmtUSD(totalLand);
+
+  animVal('r-sales', fmtUSD(totalSales));
+  el('r-sales-sub').textContent = `${sellable} m² × ${fmtUSD(salePrice)}/m²`;
+
+  animVal('r-invest', fmtUSD(totalInvest));
+  el('r-invest-sub').textContent = `Suelo: ${fmtUSD(totalLand)} · Obra: ${fmtUSD(totalConst)}`;
+
+  const isProfitable = roi >= 10;
+  const isBorderline = roi >= 0 && roi < 10;
+  const isLoss = roi < 0;
+
+  const profitColor = isProfitable ? 'green' : isBorderline ? 'yellow' : 'red';
+  el('r-profit').textContent = fmtUSD(profit);
+  el('r-profit-sub').textContent = `Margen: ${roi.toFixed(1)}% sobre inversión`;
+  setCardClass('rc-profit', profitColor);
+  setCardClass('rc-sales', 'green');
+  setCardClass('rc-invest', '');
+  setCardClass('rc-incid', incidence < 45 ? 'green' : incidence < 60 ? 'yellow' : 'red');
+
+  animVal('r-incid', incidence.toFixed(1)+'%');
+
+  // ROI Big
+  el('roiBig').textContent = roi.toFixed(1)+'%';
+  el('roiBig').style.background = isProfitable
+    ? 'linear-gradient(135deg,#22c55e,#4ade80)'
+    : isBorderline
+    ? 'linear-gradient(135deg,#eab308,#fde047)'
+    : 'linear-gradient(135deg,#ef4444,#f87171)';
+  el('roiBig').style['-webkit-background-clip'] = 'text';
+  el('roiBig').style['-webkit-text-fill-color'] = 'transparent';
+
+  // Status badge
+  const badge = el('statusBadge');
+  badge.className = 'status-badge ' + (isProfitable?'status-green':isBorderline?'status-yellow':'status-red');
+  badge.innerHTML = `<span></span>${isProfitable?'✅ VIABLE':'⚠️ MARGINAL'}${isLoss?' – PÉRDIDA':''}`;
+
+  // Profitability bar: map roi from -50 to 50+ → 0-100%
+  const barPct = Math.max(0, Math.min(100, ((roi + 50) / 100) * 100));
+  const bar = el('profBar');
+  bar.style.width = barPct + '%';
+  bar.style.background = isProfitable
+    ? 'linear-gradient(90deg,#22c55e,#4ade80)'
+    : isBorderline
+    ? 'linear-gradient(90deg,#eab308,#fde047)'
+    : 'linear-gradient(90deg,#ef4444,#f87171)';
+
+  // Summary table
+  el('s-land').textContent = fmtUSD(totalLand);
+  el('s-const').textContent = fmtUSD(totalConst);
+  el('s-build').textContent = buildable.toLocaleString()+ ' m²';
+  el('s-sell').textContent = sellable.toLocaleString()+ ' m²';
+  el('s-eff').textContent = efficiency.toFixed(1)+'%';
+  el('s-landInc').textContent = landIncidence.toFixed(1)+'%';
+  el('s-total').textContent = fmtUSD(totalInvest);
+
+  updateInsights({ roi, incidence, landIncidence, salePrice, constCost, profit, totalSales, totalLand, sellable, buildable, efficiency });
+}
+
+// ─── INSIGHTS ─────────────────────────────────────────────
+function updateInsights({ roi, incidence, landIncidence, salePrice, constCost, profit, totalSales, totalLand, sellable, buildable, efficiency }){
+  const insights = [];
+  if(roi >= 20) insights.push({type:'good',icon:'🚀',text:'El ROI supera el 20%. Proyecto altamente rentable para el mercado argentino.'});
+  else if(roi >= 10) insights.push({type:'good',icon:'✅',text:`ROI del ${roi.toFixed(1)}% — Proyecto viable. Margen dentro del rango estándar del sector.`});
+  else if(roi >= 0) insights.push({type:'warn',icon:'⚠️',text:`ROI del ${roi.toFixed(1)}% — Margen marginal. Considera renegociar el suelo o mejorar la eficiencia.`});
+  else insights.push({type:'bad',icon:'🔴',text:`ROI negativo (${roi.toFixed(1)}%). El proyecto no es viable con los parámetros actuales.`});
+
+  if(incidence > 60) insights.push({type:'bad',icon:'🏗️',text:`Incidencia constructiva del ${incidence.toFixed(1)}% — El costo de obra es muy alto relativo al precio de venta. Optimizá el sistema constructivo.`});
+  else if(incidence > 45) insights.push({type:'warn',icon:'🏗️',text:`Incidencia constructiva del ${incidence.toFixed(1)}% — En zona de atención. Lo ideal es mantenerla bajo 45%.`});
+  else insights.push({type:'good',icon:'🏗️',text:`Incidencia constructiva del ${incidence.toFixed(1)}% — Relación costo-precio saludable.`});
+
+  if(landIncidence > 35) insights.push({type:'bad',icon:'🌍',text:`El suelo representa el ${landIncidence.toFixed(1)}% de la inversión total — Por encima del umbral óptimo (25–30%). Negociá mejores condiciones.`});
+  else if(landIncidence > 25) insights.push({type:'warn',icon:'🌍',text:`Incidencia del suelo en ${landIncidence.toFixed(1)}% — En rango aceptable aunque algo elevada.`});
+  else insights.push({type:'good',icon:'🌍',text:`Incidencia del suelo en ${landIncidence.toFixed(1)}% — Excelente relación suelo/inversión.`});
+
+  if(efficiency < 65) insights.push({type:'warn',icon:'📐',text:`Eficiencia vendible del ${efficiency.toFixed(0)}% — Por debajo del estándar (70–80%). Mejorar el proyecto arquitectónico puede aumentar significativamente el ROI.`});
+  else if(efficiency >= 80) insights.push({type:'good',icon:'📐',text:`Eficiencia vendible del ${efficiency.toFixed(0)}% — Muy eficiente. Excelente aprovechamiento de la superficie.`});
+
+  if(salePrice < 1200) insights.push({type:'warn',icon:'💵',text:'Precio de venta bajo. Verificá si el mercado local soporta ese valor o ajustá el producto.'});
+  if(constCost > 900) insights.push({type:'warn',icon:'🔨',text:'Costo de construcción elevado. Evaluá sistemas alternativos (steel frame, construcción seca) para reducir costos.'});
+
+  const list = el('insightsList');
+  list.innerHTML = insights.map(i=>`
+    <div class="insight-item ${i.type}">
+      <span class="insight-icon">${i.icon}</span>
+      <span class="insight-text">${i.text}</span>
+    </div>`).join('');
+}
+
+// ─── HELPERS ──────────────────────────────────────────────
+function v(id){ return document.getElementById(id)?.value ?? ''; }
+function el(id){ return document.getElementById(id); }
+function setVal(id, val){ const e=document.getElementById(id); if(e) e.value=val; }
+function fmt(n){ return '$'+Number(n).toLocaleString('es-AR'); }
+function fmtUSD(n){ return 'USD '+Math.round(n).toLocaleString('es-AR'); }
+function setCardClass(id, cls){
+  const c = document.getElementById(id);
+  if(!c) return;
+  c.classList.remove('green','red','yellow');
+  if(cls) c.classList.add(cls);
+}
+function animVal(id, val){
+  const e = document.getElementById(id);
+  if(!e) return;
+  e.classList.remove('updating');
+  void e.offsetWidth;
+  e.textContent = val;
+  e.classList.add('updating');
+}
+
+// ─── RESET ─────────────────────────────────────────────────
+function resetDefaults(){
+  sellableUnlocked = false;
+  dynamicItems = [];
+  document.getElementById('dynamicItems').innerHTML='';
+  const defaults = {
+    buildable:1200, efficiency:75, sellable:900,
+    landPurchase:180000, demolition:8000, relocMonths:6, relocRent:500,
+    uAptQty:2, uAptVal:55000, uStudioQty:1, uStudioVal:32000, uParkQty:2, uParkVal:9000,
+    salePrice:1800, constCost:750
+  };
+  Object.entries(defaults).forEach(([k,v])=>setVal(k,v));
+  document.getElementById('saleSlider').value=1800;
+  document.getElementById('constSlider').value=750;
+  document.getElementById('salePriceDisplay').textContent=fmt(1800);
+  document.getElementById('constCostDisplay').textContent=fmt(750);
+  calculate();
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  syncSellable();
+  document.getElementById('salePriceDisplay').textContent=fmt(1800);
+  document.getElementById('constCostDisplay').textContent=fmt(750);
+  calculate();
+});
+</script>
+</body>
+</html>
